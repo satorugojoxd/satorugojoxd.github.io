@@ -16,11 +16,18 @@
             height: 100vh;
             margin: 0;
         }
+        .container {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
         h1, label {
-            color: white;
+            color: #333;
         }
         input {
             margin-bottom: 10px;
+            padding: 8px;
         }
         button {
             padding: 10px;
@@ -33,25 +40,28 @@
     </style>
 </head>
 <body>
-    <h1>WebSocket Bot Paneli</h1>
-    
-    <label for="salaInput">Sala Değeri:</label>
-    <input type="text" id="salaInput" placeholder="384Sew" />
+    <div class="container">
+        <h1>WebSocket Bot Paneli</h1>
+        
+        <label for="salaInput">Sala Değeri:</label>
+        <input type="text" id="salaInput" placeholder="384Sew" />
 
-    <label for="proxyInput">Proxy Adresi:</label>
-    <input type="text" id="proxyInput" placeholder="wss://example.com" />
+        <label for="ipInput">IP Adresi:</label>
+        <input type="text" id="ipInput" placeholder="185.16.39.161" />
 
-    <button onclick="sendBot()">Botu Gönder</button>
+        <button onclick="sendBot()">Botu Gönder</button>
+    </div>
 
     <script>
         function sendBot() {
             var salaValue = document.getElementById("salaInput").value;
-            var proxyUrl = document.getElementById("proxyInput").value;
+            var ipValue = document.getElementById("ipInput").value;
 
             var nick = "mikey" + Math.floor(Math.random() * 9999);
             var jsonString = JSON.stringify([3, { "v": 20000, "nick": nick, "avatar": 1, "platform": 0, "sala": salaValue }]);
 
-            var sockurl = `${proxyUrl}/?c=${Math.floor(Math.random() * 999999)}&EIO=3&transport=websocket`;
+            var proxyUrl = `https://${ipValue}/server?check=1&v3=1&room=${salaValue}&__cpo=aHR0cHM6Ly9nYXJ0aWMuaW8`;
+            var sockurl = `wss:${ipValue}/socket.io/?c=${Math.floor(Math.random() * 999999)}&EIO=3&transport=websocket`;
 
             var socket = new WebSocket(sockurl, null);
             socket.addEventListener('message', function (event) {
