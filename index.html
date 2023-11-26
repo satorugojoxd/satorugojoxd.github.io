@@ -5,93 +5,74 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebSocket Bot Paneli</title>
-    <style>
-        body {
-            background-image: url('https://static.animecorner.me/2023/09/1693649891-94080-1024x576.png');
-            background-size: cover;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        h1, label {
-            color: #333;
-        }
-        input {
-            margin-bottom: 10px;
-            padding: 8px;
-        }
-        button {
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>WebSocket Bot Paneli</h1>
-        
-        <label for="salaInput">Sala Değeri:</label>
-        <input type="text" id="salaInput" placeholder="384Sew" />
+    <h1>WebSocket Bot Paneli</h1>
+    
+    <label for="ipInput">IP Adresi:</label>
+    <input type="text" id="ipInput" placeholder="185.16.39.161" />
 
-        <label for="ipInput">IP Adresi:</label>
-        <input type="text" id="ipInput" placeholder="185.16.39.161" />
+    <label for="salaInput">Sala Değeri:</label>
+    <input type="text" id="salaInput" placeholder="384Sew" />
 
-        <button onclick="sendBot()">Botu Gönder</button>
-    </div>
+    <label for="proxyInput">Proxy Adresi:</label>
+    <input type="text" id="proxyInput" placeholder="https://example.com" />
+
+    <button onclick="sendBot()">Botu Gönder</button>
 
     <script>
         function sendBot() {
-            var salaValue = document.getElementById("salaInput").value;
             var ipValue = document.getElementById("ipInput").value;
+            var salaValue = document.getElementById("salaInput").value;
+            var proxyUrl = document.getElementById("proxyInput").value;
 
             var nick = "mikey" + Math.floor(Math.random() * 9999);
             var jsonString = JSON.stringify([3, { "v": 20000, "nick": nick, "avatar": 1, "platform": 0, "sala": salaValue }]);
 
-            var proxyUrl = `https://${ipValue}/server?check=1&v3=1&room=${salaValue}&__cpo=aHR0cHM6Ly9nYXJ0aWMuaW8`;
-            var sockurl = `wss:${ipValue}/socket.io/?c=${Math.floor(Math.random() * 999999)}&EIO=3&transport=websocket`;
+            var proxyUrlWithParams = `${proxyUrl}/server?check=1&v3=1&room=${salaValue}&__cpo=aHR0cHM6Ly9nYXJ0aWMuaW8`;
 
-            var socket = new WebSocket(sockurl, null);
-            socket.addEventListener('message', function (event) {
-                console.log(event.data);
-                if (event.data === '40') {
-                    socket.send(`42${jsonString}`)
-                }
+            fetch(proxyUrlWithParams)
+                .then(response => response.text())
+                .then(x => {
+                    var sockurl = `wss:` + x.split(":")[1] + `/socket.io/?c=` + x.split("?c=")[1] + `&EIO=3&transport=websocket`;
 
-                const data = JSON.parse(event.data.slice(2));
-                switch (data[0]) {
-                    case "5":
-                        socket.send(`42[46,${data[2]}]`)
-                        console.log(`${nick} odaya katıldı.`);
-                        LongID = data[1];
-                        YourID = data[2];
-                        socket.send(`42[11,"${data[2]}","${nick} Joined!"]`);
-                        setInterval(() => {
-                            socket.send(`42[42,${YourID}]`);
-                            socket.send('2');
-                        }, 15000);
-                        break;
-                    case "6":
-                        console.log(`${nick} odadan ayrıldı.`);
-                        data[1] == null ? socket.send(`41`) : 0;
-                        socket.close();
-                        break;
-                    default:
-                        break;
-                }
-            });
+                    console.log(x.split(":")[1], x.split("?c=")[1]);
+
+                    var socket = new WebSocket(sockurl, null);
+                    socket.addEventListener('message', function (event) {
+                        console.log(event.data);
+
+                        if (event.data === '40') {
+                            socket.send(`42${jsonString}`);
+                        }
+
+                        const data = JSON.parse(event.data.slice(2));
+                        switch (data[0]) {
+                            case "5":
+                                socket.send(`42[46,${data[2]}]`);
+                                console.log(`${nick} odaya katıldı.`);
+                                LongID = data[1];
+                                YourID = data[2];
+                                socket.send(`42[11,"${data[2]}","${nick} Joined!"]`);
+
+                                setInterval(() => {
+                                    socket.send(`42[42,${YourID}]`);
+                                    socket.send('2');
+                                }, 15000);
+                                break;
+                            case "6":
+                                console.log(`${nick} odadan ayrıldı.`);
+                                data[1] == null ? socket.send(`41`) : 0;
+                                socket.close();
+                                break;
+                            default:
+                                break;
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Bot gönderme işlemi başarısız:', error);
+                });
         }
     </script>
 </body>
